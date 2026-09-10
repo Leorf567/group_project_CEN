@@ -1,1 +1,5 @@
-
+• Implements user authentication with at least two distinct user types (e.g., administrator
+and member)
+• Implements a dynamic database of user and item data
+• Implements one or more “operations” involving some form of frontend-backend-database
+communication
