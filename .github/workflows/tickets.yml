@@ -1,0 +1,60 @@
+name: Ticket sync
+
+# tickets/*.md on main  ->  Issues ("Ticket 001 - ...") + Project board
+# Issues tab (assign / unassign / close / reopen)  ->  tickets/*.md on main  ->  board
+on:
+  push:
+    branches: [main]
+    paths: ["tickets/**"]
+  issues:
+    types: [assigned, unassigned, closed, reopened]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"   # hourly safety net in case a run was missed
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: ticket-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      # Classic personal access token with scopes: repo, project.
+      # Needed because a user-owned Project board can't be edited with the default token.
+      GH_TOKEN: ${{ secrets.PROJECT_TOKEN || github.token }}
+      PROJECT_NUMBER: ${{ vars.PROJECT_NUMBER || '2' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          # Push back with the owner's token so the branch protection on main lets it through.
+          token: ${{ secrets.PROJECT_TOKEN || github.token }}
+
+      - name: Issue change -> ticket file
+        id: from_issue
+        if: github.event_name == 'issues'
+        run: python3 scripts/ticket.py from-issue
+
+      - name: Ticket files -> Issues + Project board
+        id: sync
+        run: python3 scripts/ticket.py sync-github
+
+      - name: Commit ticket file updates to main
+        run: |
+          if [ -z "$(git status --porcelain -- tickets)" ]; then
+            echo "Ticket files already in sync."; exit 0
+          fi
+          git config user.name  "ticket-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tickets
+          git commit -m "${{ steps.from_issue.outputs.message || 'tickets: record issue numbers' }}"
+          for i in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1

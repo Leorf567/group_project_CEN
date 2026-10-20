@@ -1,0 +1,244 @@
+<title>CEN Ticket Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a ticket-stub kanban — three status lanes, each ticket a perforated stub with its number punched on the left. */
+:root {
+  --bg: #eef1f4;
+  --panel: #f8fafb;
+  --card: #ffffff;
+  --ink: #17212b;
+  --muted: #5b6a78;
+  --line: #d3dbe2;
+  --accent: #0f6e66;
+  --ready: #3d63b8;
+  --ready-soft: #e3eafa;
+  --prog: #a86400;
+  --prog-soft: #fbefd9;
+  --done: #2c7a3f;
+  --done-soft: #e0f1e4;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11171d; --panel: #161e25; --card: #1d2730; --ink: #e5ecf2; --muted: #93a3b2; --line: #2d3a46;
+  --accent: #4fc2b6; --ready: #8aa9f0; --ready-soft: #1f2a44; --prog: #f0b45a; --prog-soft: #3a2c14;
+  --done: #74c98a; --done-soft: #183022; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11171d; --panel: #161e25; --card: #1d2730; --ink: #e5ecf2; --muted: #93a3b2; --line: #2d3a46;
+  --accent: #4fc2b6; --ready: #8aa9f0; --ready-soft: #1f2a44; --prog: #f0b45a; --prog-soft: #3a2c14;
+  --done: #74c98a; --done-soft: #183022; color-scheme: dark; }
+
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 22px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.eyebrow { font: 600 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 800 clamp(28px, 4.5vw, 42px)/1.05 var(--display); margin: 4px 0 0; text-wrap: balance; letter-spacing: -.01em; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel);
+  border-radius: 999px; padding: 4px 10px; font: 600 12px var(--mono); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.pill.live .dot { background: var(--done); box-shadow: 0 0 0 3px var(--done-soft); }
+.pill.snap .dot { background: var(--prog); }
+button { font: 600 13px var(--body); color: var(--ink); background: var(--card); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.sum { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 2px; }
+.sum b { font: 800 26px var(--display); font-variant-numeric: tabular-nums; }
+.sum span { font-size: 13px; color: var(--muted); }
+.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; display: flex; margin-top: 6px; }
+.bar i { display: block; height: 100%; }
+
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.tools input { font: 14px var(--body); color: var(--ink); background: var(--card); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 10px; min-width: 0; flex: 1 1 220px; max-width: 360px; }
+
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+@media (max-width: 860px) { .board { grid-template-columns: 1fr; } }
+.lane { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
+.lane h2 { margin: 0; display: flex; align-items: center; justify-content: space-between; font: 700 15px var(--display); padding: 2px 4px; }
+.lane h2 .n { font: 600 12px var(--mono); color: var(--muted); }
+.lane[data-s="ready"] h2 { color: var(--ready); }
+.lane[data-s="in-progress"] h2 { color: var(--prog); }
+.lane[data-s="done"] h2 { color: var(--done); }
+.empty { color: var(--muted); font-size: 13px; padding: 14px 6px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
+
+.stub { display: grid; grid-template-columns: 58px minmax(0, 1fr); background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; overflow: hidden; }
+.num { display: grid; place-items: center; font: 600 15px var(--mono); position: relative;
+  border-right: 2px dashed var(--line); }
+.lane[data-s="ready"] .num { background: var(--ready-soft); color: var(--ready); }
+.lane[data-s="in-progress"] .num { background: var(--prog-soft); color: var(--prog); }
+.lane[data-s="done"] .num { background: var(--done-soft); color: var(--done); }
+.num::before, .num::after { content: ""; position: absolute; right: -9px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--panel); border: 1px solid var(--line); }
+.num::before { top: -9px; } .num::after { bottom: -9px; }
+.body { padding: 10px 12px 12px; display: grid; gap: 6px; min-width: 0; }
+.body h3 { margin: 0; font: 700 15px/1.3 var(--body); overflow-wrap: anywhere; }
+.row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 12.5px; color: var(--muted); }
+.who { font: 600 12px var(--mono); color: var(--ink); }
+.who.none { color: var(--muted); font-weight: 400; }
+.row a { color: var(--accent); text-decoration: none; font-weight: 700; }
+.row a:hover { text-decoration: underline; }
+.crit { font-variant-numeric: tabular-nums; }
+details { font-size: 13.5px; }
+details summary { cursor: pointer; color: var(--muted); font-size: 12.5px; }
+details p { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 65ch; }
+.claim { font: 12px var(--mono); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px;
+  display: flex; justify-content: space-between; gap: 8px; align-items: center; min-width: 0; }
+.claim code { overflow-x: auto; white-space: nowrap; }
+.claim button { padding: 2px 8px; font-size: 11px; }
+.note { font-size: 13px; color: var(--muted); max-width: 75ch; }
+.note a { color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) { .stub { animation: in .25s ease both; } }
+@keyframes in { from { transform: translateY(4px); } to { transform: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">group_project_CEN · tickets on main</div>
+      <h1>Ticket Board</h1>
+    </div>
+    <div class="meta">
+      <span class="pill" id="mode"><span class="dot"></span><span id="modeText">Loading…</span></span>
+      <span id="updated"></span>
+      <button id="refresh" type="button">Refresh</button>
+    </div>
+  </header>
+
+  <section class="summary" aria-label="Summary">
+    <div class="sum"><b id="sTotal">–</b><span>tickets in total</span>
+      <div class="bar" id="sBar"></div></div>
+    <div class="sum"><b id="sReady">–</b><span>ready to pick up</span></div>
+    <div class="sum"><b id="sProg">–</b><span>in progress</span></div>
+    <div class="sum"><b id="sDone">–</b><span>done</span></div>
+  </section>
+
+  <div class="tools">
+    <input id="q" type="search" placeholder="Filter by name, number or person" aria-label="Filter tickets">
+  </div>
+
+  <main class="board" id="board">
+    <section class="lane" data-s="ready"><h2>Ready to pick up <span class="n"></span></h2><div class="cards"></div></section>
+    <section class="lane" data-s="in-progress"><h2>In progress <span class="n"></span></h2><div class="cards"></div></section>
+    <section class="lane" data-s="done"><h2>Done <span class="n"></span></h2><div class="cards"></div></section>
+  </main>
+
+  <p class="note" id="note"></p>
+</div>
+
+<script id="snapshot" type="application/json">/*SNAPSHOT*/</script>
+<script>
+(() => {
+  const OWNER = "Leorf567", REPO = "group_project_CEN", BRANCH = "main";
+  const GH = `https://github.com/${OWNER}/${REPO}`;
+  const LIVE_URL = `https://leorf567.github.io/${REPO}/`;
+  const REFRESH_MS = 120000;
+  const $ = s => document.querySelector(s);
+  let tickets = [], live = false, timer = null;
+
+  function parse(text, file) {
+    const m = text.replace(/\r\n/g, "\n").match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+    if (!m) return null;
+    const meta = {};
+    m[1].split("\n").forEach(l => { const i = l.indexOf(":"); if (i > 0) meta[l.slice(0, i).trim()] = l.slice(i + 1).trim(); });
+    const body = m[2];
+    const d = body.match(/^## Description\s*\n([\s\S]*?)(?=^## |$(?![\s\S]))/m);
+    const crit = body.match(/^## Acceptance criteria\s*\n([\s\S]*?)(?=^## |$(?![\s\S]))/m);
+    const boxes = crit ? crit[1].match(/^- \[( |x|X)\] .+$/gm) || [] : [];
+    return { id: meta.id, title: meta.title, status: meta.status || "ready", assignee: meta.assignee || "",
+      issue: meta.issue || "", file, description: (d ? d[1] : body).trim(),
+      critDone: boxes.filter(b => /\[[xX]\]/.test(b)).length, critTotal: boxes.length };
+  }
+
+  async function loadLive() {
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/tickets?ref=${BRANCH}`, { cache: "no-store" });
+    if (!r.ok) throw new Error("GitHub said " + r.status);
+    const files = (await r.json()).filter(f => /^\d{3}-.*\.md$/.test(f.name));
+    const texts = await Promise.all(files.map(f =>
+      fetch(`https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/tickets/${f.name}?t=${Date.now()}`)
+        .then(x => x.ok ? x.text() : "")));
+    return texts.map((t, i) => parse(t, "tickets/" + files[i].name)).filter(Boolean);
+  }
+
+  function snapshot() {
+    try { return JSON.parse($("#snapshot").textContent); } catch { return { generated: null, tickets: [] }; }
+  }
+
+  function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+  function card(t) {
+    const s = el("article", "stub");
+    s.append(el("div", "num", t.id));
+    const b = el("div", "body");
+    b.append(el("h3", null, t.title));
+    const row = el("div", "row");
+    row.append(el("span", "who" + (t.assignee ? "" : " none"), t.assignee ? "@" + t.assignee : "unassigned"));
+    if (t.critTotal) row.append(el("span", "crit", `${t.critDone}/${t.critTotal} criteria`));
+    if (t.issue) { const a = el("a", null, "Issue #" + t.issue); a.href = `${GH}/issues/${t.issue}`; a.target = "_blank"; a.rel = "noopener"; row.append(a); }
+    const f = el("a", null, "File"); f.href = `${GH}/blob/${BRANCH}/${t.file}`; f.target = "_blank"; f.rel = "noopener"; row.append(f);
+    b.append(row);
+    if (t.description) { const d = el("details"); d.append(el("summary", null, "Description"), el("p", null, t.description)); b.append(d); }
+    if (t.status === "ready") {
+      const c = el("div", "claim"); const cmd = `python scripts/ticket.py claim ${t.id}`;
+      const btn = el("button", null, "Copy"); btn.type = "button";
+      btn.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(cmd); btn.textContent = "Copied"; }
+        catch { const r = document.createRange(); r.selectNodeContents(code); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); btn.textContent = "Selected"; }
+        setTimeout(() => btn.textContent = "Copy", 1500);
+      });
+      const code = el("code", null, cmd); c.append(code, btn); b.append(c);
+    }
+    s.append(b);
+    return s;
+  }
+
+  function render() {
+    const q = $("#q").value.trim().toLowerCase();
+    const shown = tickets.filter(t => !q || [t.id, t.title, t.assignee].join(" ").toLowerCase().includes(q));
+    const count = s => tickets.filter(t => t.status === s).length;
+    const r = count("ready"), p = count("in-progress"), d = count("done"), n = tickets.length;
+    $("#sTotal").textContent = n; $("#sReady").textContent = r; $("#sProg").textContent = p; $("#sDone").textContent = d;
+    const bar = $("#sBar"); bar.replaceChildren();
+    [["ready", r], ["prog", p], ["done", d]].forEach(([k, v]) => { if (!n || !v) return; const i = el("i"); i.style.width = (v / n * 100) + "%"; i.style.background = `var(--${k})`; bar.append(i); });
+    document.querySelectorAll(".lane").forEach(lane => {
+      const list = shown.filter(t => t.status === lane.dataset.s).sort((a, b) => a.id.localeCompare(b.id));
+      lane.querySelector(".n").textContent = list.length;
+      const box = lane.querySelector(".cards"); box.replaceChildren();
+      box.style.display = "grid"; box.style.gap = "10px";
+      if (!list.length) box.append(el("div", "empty", q ? "No matches" : "Nothing here"));
+      list.forEach(t => box.append(card(t)));
+    });
+  }
+
+  async function load() {
+    try {
+      tickets = await loadLive(); live = true;
+      $("#mode").className = "pill live"; $("#modeText").textContent = "Live from main";
+      $("#updated").textContent = "Checked " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + " · refreshes every 2 min";
+      $("#note").textContent = "Reads the ticket files on main directly. A change can take up to a few minutes to appear because GitHub caches raw files.";
+    } catch {
+      const snap = snapshot(); tickets = snap.tickets || []; live = false;
+      $("#mode").className = "pill snap"; $("#modeText").textContent = "Snapshot";
+      $("#updated").textContent = snap.generated ? "As of " + new Date(snap.generated).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : "";
+      const note = $("#note"); note.replaceChildren("This copy shows the tickets as of the time above. For the live board, open ");
+      const a = el("a", null, LIVE_URL); a.href = LIVE_URL; a.target = "_blank"; a.rel = "noopener";
+      note.append(a, " or the Projects tab on GitHub.");
+    }
+    render();
+  }
+
+  $("#q").addEventListener("input", render);
+  $("#refresh").addEventListener("click", load);
+  load();
+  timer = setInterval(() => { if (!document.hidden) load(); }, REFRESH_MS);
+})();
+</script>
