@@ -45,16 +45,7 @@ jobs:
         run: python3 scripts/ticket.py sync-github
 
       - name: Commit ticket file updates to main
+        # Committed through the API with PROJECT_TOKEN: signed (Verified) and
+        # authored by the token's owner, not by a bot.
         run: |
-          if [ -z "$(git status --porcelain -- tickets)" ]; then
-            echo "Ticket files already in sync."; exit 0
-          fi
-          git config user.name  "ticket-bot"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tickets
-          git commit -m "${{ steps.from_issue.outputs.message || 'tickets: record issue numbers' }}"
-          for i in 1 2 3; do
-            git push origin HEAD:main && exit 0
-            git pull --rebase origin main
-          done
-          exit 1
+          python3 scripts/commit_tickets_signed.py "${{ steps.from_issue.outputs.message || 'tickets: record issue numbers' }}"
