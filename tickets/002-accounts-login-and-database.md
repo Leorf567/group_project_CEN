@@ -1,7 +1,7 @@
 ---
 id: 002
 title: Accounts, login and database
-status: in-progress
+status: done
 assignee: Leorf567
 issue: 5
 ---
@@ -20,14 +20,14 @@ Nicholas's mission/task routes and Reda's board both sit behind this login, so a
 
 ## Acceptance criteria
 
-- [ ] Migration scripts create `users`, `missions` and `tasks` on a fresh PostgreSQL database
-- [ ] Health-check endpoint reports the database connection is up
-- [ ] Register route creates a user with a hashed password (never stored in plain text)
-- [ ] Duplicate username is rejected with "Username already taken"
-- [ ] Login returns a JWT; protected routes return 401 without a valid token
-- [ ] Logout works and expired tokens are rejected
-- [ ] Users have a role: admin or member
-- [ ] Test cases TC-REG-001 (register new user) and TC-REG-002 (duplicate username) pass, including the database postcondition
+- [x] Migration scripts create `users`, `missions` and `tasks` on a fresh PostgreSQL database
+- [x] Health-check endpoint reports the database connection is up
+- [x] Register route creates a user with a hashed password (never stored in plain text)
+- [x] Duplicate username is rejected with "Username already taken"
+- [x] Login returns a JWT; protected routes return 401 without a valid token
+- [x] Logout works and expired tokens are rejected
+- [x] Users have a role: admin or member
+- [x] Test cases TC-REG-001 (register new user) and TC-REG-002 (duplicate username) pass, including the database postcondition
 
 ## Demo
 
