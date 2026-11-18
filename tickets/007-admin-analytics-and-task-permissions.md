@@ -3,7 +3,7 @@ id: 007
 title: Admin analytics and task permissions
 status: in-progress
 assignee: Leorf567
-issue:
+issue: 14
 ---
 
 ## Description

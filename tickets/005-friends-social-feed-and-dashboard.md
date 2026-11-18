@@ -3,7 +3,7 @@ id: 005
 title: Friends, social feed and dashboard
 status: in-progress
 assignee: refloow-0
-issue:
+issue: 12
 ---
 
 ## Description
